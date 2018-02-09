@@ -4,7 +4,6 @@ import android.app.AlertDialog.Builder;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnDismissListener;
 import android.os.Bundle;
 import android.text.InputType;
 import android.widget.CheckBox;
@@ -26,17 +25,18 @@ public class SettingsFragment extends DialogFragment {
 		LinearLayout cl = new LinearLayout(getActivity());
 		LinearLayout vl = new LinearLayout(getActivity());
 		vl.setOrientation(LinearLayout.VERTICAL);
-		
-		final EditText su = new EditText(getActivity());
-		su.setHint("Sensors update period (ms)");
-		su.setText("" + ml.sup);
-		su.setInputType(InputType.TYPE_NUMBER_VARIATION_NORMAL | InputType.TYPE_CLASS_NUMBER);
-		ch.addView(su);
-		
-		final CheckBox cs = new CheckBox(getActivity());
-		cs.setText("Show FPS");
-		cs.setChecked(ml.showFPS);
-		ch.addView(cs);
+
+		final EditText ds = new EditText(getActivity());
+		ds.setHint("Dots resilience [0..100%]");
+		ds.setText("" + (int)(ml.spring * 100));
+		ds.setInputType(InputType.TYPE_NUMBER_VARIATION_NORMAL | InputType.TYPE_CLASS_NUMBER);
+		ch.addView(ds);
+
+		final EditText dr = new EditText(getActivity());
+		dr.setHint("Dots radius (px)");
+		dr.setText("" + ml.radius);
+		dr.setInputType(InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_CLASS_NUMBER);
+		ch.addView(dr);
 		
 		vl.addView(ch);
 		
@@ -61,36 +61,44 @@ public class SettingsFragment extends DialogFragment {
 		vl.addView(ll);
 
 		final EditText cr = new EditText(getActivity());
-		cr.setHint("Red value [0; 255]");
+		cr.setHint("Red value [0..255]");
 		cr.setText("" + ml.color[0]);
 		cr.setInputType(InputType.TYPE_NUMBER_VARIATION_NORMAL | InputType.TYPE_CLASS_NUMBER);
 		cl.addView(cr);
 		final EditText cg = new EditText(getActivity());
-		cg.setHint("Green value [0; 255]");
+		cg.setHint("Green value [0..255]");
 		cg.setText("" + ml.color[1]);
 		cg.setInputType(InputType.TYPE_NUMBER_VARIATION_NORMAL | InputType.TYPE_CLASS_NUMBER);
 		cl.addView(cg);
 		final EditText cb = new EditText(getActivity());
-		cb.setHint("Blue value [0; 255]");
+		cb.setHint("Blue value [0..255]");
 		cb.setText("" + ml.color[2]);
 		cb.setInputType(InputType.TYPE_NUMBER_VARIATION_NORMAL | InputType.TYPE_CLASS_NUMBER);
 		cl.addView(cb);
 		
 		vl.addView(cl);
 		
-		builder.setView(vl).setTitle("Settings").setPositiveButton("Apply", new DialogInterface.OnClickListener() {
+		builder.setView(vl).setTitle("Settings").setNegativeButton("Reset", new DialogInterface.OnClickListener(){
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				ml.resetPrefs();
+				ml.reload();
+				ml.isPaused = false;
+			}
+		}).setPositiveButton("Apply", new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface arg0, int arg1) {
 				try {
 					ml.dotsAmount = Integer.parseInt(de.getText().toString());
 					ml.cell = Integer.parseInt(ps.getText().toString());
 					ml.dpc = Integer.parseInt(bv.getText().toString());
-					ml.sup = Integer.parseInt(su.getText().toString());
 					ml.color[0] = Integer.parseInt(cr.getText().toString());
 					ml.color[1] = Integer.parseInt(cg.getText().toString());
 					ml.color[2] = Integer.parseInt(cb.getText().toString());
+					ml.radius = Math.max(Float.parseFloat(dr.getText().toString()), .2f);
+					ml.spring = Integer.parseInt(ds.getText().toString()) / 100f;
 				} catch(Exception e){}
-				ml.showFPS = cs.isChecked();
+				ml.save();
 				ml.reload();
 				ml.isPaused = false;
 			}

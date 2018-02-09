@@ -24,21 +24,21 @@ public class Game {
 		public void update(float xa, float ya, float w, float h){
 			acc.x = xa;
 			acc.y = ya;
-			
+			acc.scale(r.nextFloat() * .02f + .98f);
 			accelerate();
 			
 			if (spd.x > 0 && pos.x + spd.x + R > w){
-				spd.x *= -.5f;
+				spd.x *= -spring;
 				pos.x = w - R;
 			} else if (spd.x < 0 && pos.x + spd.x - R < 0){
-				spd.x *= -.5f;
+				spd.x *= -spring;
 				pos.x = R;
 			}
 			if (spd.y > 0 && pos.y + spd.y + R > h){
-				spd.y *= -.5f;
+				spd.y *= -spring;
 				pos.y = h - R;
 			} else if (spd.y < 0 && pos.y + spd.y - R < 0){
-				spd.y *= -.5f;
+				spd.y *= -spring;
 				pos.y = R;
 			}
 			
@@ -58,22 +58,23 @@ public class Game {
 	}
 
 	public static Random r = new Random();
-	public static float G = 9.8f, R = 2f, cellSize;
+	public float G = 9.8f, R, cellSize;
 	public int dotsAmount, dpc;
 	public Dot[] dots;
 	public SensorManager sm;
 	public Sensor gyro;
 	public Paint pain      = new Paint();
-	public boolean showFPS;
 	public int[] color;
+	public float spring;
 	
-	public Game(int da, boolean fps, int[] _color, int _cell, int _dpc, int _sup, int w, int h, SensorManager _sm){
+	public Game(int da, int[] _color, int _cell, int _dpc, float _r, float _spring, int w, int h, SensorManager _sm){
 		dotsAmount = da;
-		showFPS = fps;
 		dots = new Dot[dotsAmount];
 		color = _color;
 		cellSize = _cell;
 		dpc = _dpc;
+		R = _r;
+		spring = _spring;
 		
 		pain.setColor(Color.BLACK);
 		pain.setTextAlign(Align.LEFT);
@@ -98,7 +99,7 @@ public class Game {
 					acceleration[2] = se.values[2];
 				}
 			}
-		}, gyro, _sup * 1000);
+		}, gyro, 16 * 1000);
 		
 		for (int i = 0; i < dotsAmount; ++i){
 			dots[i] = new Dot(r.nextInt(w), r.nextInt(h));
@@ -106,17 +107,11 @@ public class Game {
 	}
 	
 	float[] acceleration = new float[]{0, 0, 0};
-	public void update(Canvas canvas, long dt){
+	public void update(Canvas canvas){
 		collision();
 		for (Dot d : dots)
 			d.update(acceleration[1] / 5f, acceleration[0] / 5f, canvas.getWidth(), canvas.getHeight());
 		render(canvas);
-		
-		//Status bar
-		if (showFPS){
-			pain.setColor(Color.WHITE);
-			canvas.drawText(String.format("Frame render time (ns): %12d", dt), 5, canvas.getHeight() - 5, pain);
-		}
 	}
 	
 	public float clamp(float x, float min, float max){
@@ -138,15 +133,20 @@ public class Game {
 	public void collision(){
 		for (int i = 0; i < dotsAmount; ++i)
 			for (int j = i + 1; j < dotsAmount; ++j){
-				float d = dist(dots[i].pos.x, dots[i].pos.y, dots[j]);
-				if (d < R){
-					slam.add(new Contact(i, j, d));
+				float d = dist2(dots[i].pos.x, dots[i].pos.y, dots[j]);
+				if (d < R * R){
+					slam.add(new Contact(i, j, (float)Math.sqrt(d)));
 				}
 			}
 		
 		for (Contact c : slam){
 			Vector aim = Vector.getVector(dots[c.dot2].pos);
-			aim.sub(dots[c.dot1].pos).normalize().scale((2 * R) - c.distance).scale(.5f);
+			aim.sub(dots[c.dot1].pos);
+			if(c.distance != 0)
+				aim.normalize();
+			else
+				continue;//aim.x = 1f;
+			aim.scale((2 * R) - c.distance).scale(.5f);
 			dots[c.dot2].pos.add(aim);
 			aim.scale(-1);
 			dots[c.dot1].pos.add(aim);
@@ -191,5 +191,9 @@ public class Game {
 	
 	public float dist(float x, float y, Dot d){
 		return Vector.distance(Vector.getVector(x, y), d.pos);
+	}
+	
+	public float dist2(float x, float y, Dot d){
+		return Vector.distance2(Vector.getVector(x, y), d.pos);
 	}
 }

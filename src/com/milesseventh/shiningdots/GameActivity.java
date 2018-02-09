@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -34,6 +35,7 @@ public class GameActivity extends Activity{
 					ml.game.RENDER_DEBUG = !ml.game.RENDER_DEBUG;
 				}
 			});
+			ml.prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
 			ml.start();
 		}
 

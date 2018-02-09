@@ -24,12 +24,29 @@ public class Vector {
 		
 	}
 
+	public float distance2(Vector v){
+		return distance(this, v);
+	}
+
+	public static float distance2(Vector a, Vector b){
+		return Vector.getVector(a).sub(b).length2();
+		
+	}
+
 	public float length(){
 		return length(x, y);
 	}
 
 	public static float length(float x, float y){
 		return (float)Math.sqrt(x * x + y * y);
+	}
+
+	public float length2(){
+		return length2(x, y);
+	}
+	
+	public static float length2(float x, float y){
+		return x * x + y * y;
 	}
 
 	public Vector normalized(){
@@ -94,8 +111,8 @@ public class Vector {
 		return getVector(in.x, in.y);
 	}
 	public static Vector getVector(float x, float y){//new Vector2(x, y) alternative
-		if (true)
-			return new Vector(x, y);
+		//if (true)
+			//return new Vector(x, y);
 		
 		if (vpool[vectorsCounter] == null)
 			vpool[vectorsCounter] = new Vector();
